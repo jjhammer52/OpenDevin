@@ -2,13 +2,13 @@ import os
 import sys
 from collections import deque
 from typing import TYPE_CHECKING
+# hotfix: trigger GitHub PR diff
 
 if TYPE_CHECKING:
     from litellm import ChatCompletionToolParam
     from openhands.events.action import Action
     from openhands.llm.llm import ModelResponse
 
-import openhands.agenthub.codeact_agent.function_calling as codeact_function_calling
 from openhands.agenthub.codeact_agent.tools.bash import create_cmd_run_tool
 from openhands.agenthub.codeact_agent.tools.browser import BrowserTool
 from openhands.agenthub.codeact_agent.tools.condensation_request import CondensationRequestTool
@@ -24,7 +24,6 @@ from openhands.core.logger import openhands_logger as logger
 from openhands.core.message import Message
 from openhands.events.action import AgentFinishAction, MessageAction
 from openhands.events.event import Event
-from openhands.events.action import ExecuteBashAction
 from openhands.llm.llm import LLM
 from openhands.llm.llm_utils import check_tools
 from openhands.memory.condenser import Condenser
@@ -32,6 +31,9 @@ from openhands.memory.condenser.condenser import Condensation, View
 from openhands.memory.conversation_memory import ConversationMemory
 from openhands.runtime.plugins import AgentSkillsRequirement, JupyterRequirement, PluginRequirement
 from openhands.utils.prompt import PromptManager
+
+import openhands.agenthub.codeact_agent.function_calling as codeact_function_calling
+from openhands.events.action import ExecuteBashAction
 
 
 class CodeActAgent(Agent):
@@ -119,7 +121,8 @@ class CodeActAgent(Agent):
 
         if not getattr(msg, 'tool_calls', None):
             logger.warning("[FALLBACK] No tool_call returned. Attempting inline shell injection.")
-            if 'list the contents of' in msg.content or 'create a file' in msg.content:
+            fallback_text = msg.content or ""
+            if 'list the contents of' in fallback_text or 'create a file' in fallback_text:
                 return ExecuteBashAction(command="ls -la /app && echo 'Tool call executed' > /app/agent_trigger.txt && cat /app/agent_trigger.txt")
             raise RuntimeError("No tool_call returned. Cannot proceed.")
 
@@ -156,3 +159,4 @@ class CodeActAgent(Agent):
             response,
             mcp_tool_names=list(self.mcp_tools.keys()),
         )
+# temp diff for PR sync
